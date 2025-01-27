@@ -1,0 +1,28 @@
+#!/bin/bash
+
+function help() {
+    echo "Available subcommands:"
+    echo "  apt"
+    echo "  nvidia"
+    echo "Run 'nexa <subcommand> help' to see the help for a specific subcommand."
+}
+
+if [[ -z "$1" ]]; then
+    help
+    exit 1
+fi
+
+case "$1" in
+    apt)
+        shift
+        /usr/local/bin/nexa-apt "$@"
+        ;;
+    nvidia)
+        shift
+        /usr/local/bin/nexa-nvidia "$@"
+        ;;
+    *)
+        help
+        exit 1
+        ;;
+esac
