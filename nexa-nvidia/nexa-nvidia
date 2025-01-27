@@ -1,0 +1,135 @@
+#!/bin/bash
+
+function help() {
+    echo "Usage: nexa nvidia <command> [...]"
+    echo "Available commands:"
+    echo "  install        Install NVIDIA drivers"
+    echo "  status         Check the status of NVIDIA drivers"
+    echo "  help           Show this help message"
+}
+
+if [[ $EUID -ne 0 ]]; then
+    echo "Nexa nvidia must be run as root."
+    exit 1
+fi
+
+if [[ $# -eq 0 || "$1" == "help" ]]; then
+    help
+    exit 0
+fi
+
+if [[ "$1" == "install" ]]; then
+    GPU_MODEL=$(lspci | grep -i nvidia | awk -F ': ' '{print $2}' | sed -n 's/.*\[\(.*\)\].*/\1/p')
+    if [[ -z "$GPU_MODEL" ]]; then
+        echo "No NVIDIA GPU detected."
+        exit 1
+    fi
+    echo "[DEBUG] GPU Model: $GPU_MODEL"
+
+    declare -A GPU_FAMILIES=(
+        ["NV190"]="GeForce RTX 4060, GeForce RTX 4070"
+        ["NV170"]="GeForce RTX 3060, GeForce RTX 3070"
+        ["NV160"]="GeForce RTX 2060, GeForce GTX 1660"
+        ["NV140"]="NVIDIA Titan V"
+        ["NV130"]="GeForce 1060, GeForce 1070"
+        ["NV110"]="GeForce 750, GeForce 900"
+        ["NVE0"]="GeForce 600, GeForce 700, GeForce GTX Titan"
+        ["NVC0"]="GeForce 400, GeForce 500"
+        ["NV50"]="GeForce 8, GeForce 9, GeForce 100, GeForce 200, GeForce 300"
+    )
+    declare -A GPU_PACKAGES=(
+        ["NV160"]="nvidia-open"
+        ["NV170"]="nvidia"
+        ["NV190"]="nvidia"
+        ["NV110"]="nvidia"
+        ["NVE0"]="nvidia-470xx-dkms"
+        ["NVC0"]="nvidia-390xx-dkms"
+        ["NV50"]="nvidia-340xx-dkms"
+    )
+
+    GPU_FAMILY=""
+    for family in "${!GPU_FAMILIES[@]}"; do
+        if [[ "${GPU_FAMILIES[$family]}" =~ $GPU_MODEL ]]; then
+            GPU_FAMILY=$family
+            break
+        fi
+    done
+
+    if [[ -z "$GPU_FAMILY" ]]; then
+        echo "Unknown GPU model: $GPU_MODEL"
+        exit 1
+    fi
+
+    echo "[DEBUG] GPU Family: $GPU_FAMILY"
+    PACKAGE="${GPU_PACKAGES[$GPU_FAMILY]}"
+    echo "[DEBUG] Installing Package: $PACKAGE"
+
+    KERNEL=$(uname -r)
+    if [[ "$GPU_FAMILY" == "NV160" || "$GPU_FAMILY" == "NV170" || "$GPU_FAMILY" == "NV190" ]]; then
+        if [[ "$KERNEL" == *"linux"* ]]; then
+            PACKAGE="nvidia-open"
+        elif [[ "$KERNEL" == *"linux-lts"* ]]; then
+            PACKAGE="nvidia-lts"
+        else
+            PACKAGE="nvidia-dkms"
+        fi
+    fi
+
+    if [[ "$PACKAGE" == *"-dkms" || "$PACKAGE" == "nvidia-lts" ]]; then
+        if ! command -v yay &>/dev/null && ! command -v paru &>/dev/null; then
+            echo "AUR helper not found. Please install yay or paru."
+            exit 1
+        fi
+        if command -v yay &>/dev/null; then
+            yay -S --noconfirm "$PACKAGE"
+        elif command -v paru &>/dev/null; then
+            paru -S --noconfirm "$PACKAGE"
+        fi
+    else
+        pacman -S --noconfirm "$PACKAGE"
+    fi
+
+    pacman -S --noconfirm nvidia-settings nvidia-utils
+
+    CPU_INFO=$(lscpu | grep "Model name" | awk -F ': ' '{print $2}')
+    KERNEL_VERSION=$(uname -r)
+    if [[ "$CPU_INFO" =~ "Intel" && "$KERNEL_VERSION" == *"5.18"* ]]; then
+        echo "You are using an Intel 11th Gen CPU with kernel 5.18 or later."
+        echo "Please disable Indirect Branch Tracking by setting the 'ibt=off' kernel parameter in your boot loader."
+    fi
+
+    if [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
+        KERNEL_HOOKS=$(grep "HOOKS=" /etc/mkinitcpio.conf)
+        if [[ ! "$KERNEL_HOOKS" =~ "kms" ]]; then
+            sed -i 's/HOOKS=(base)/HOOKS=(base kms)/' /etc/mkinitcpio.conf
+            mkinitcpio -P
+        fi
+
+        GRUB_CMDLINE=$(grep "GRUB_CMDLINE_LINUX_DEFAULT=" /etc/default/grub)
+        if [[ ! "$GRUB_CMDLINE" =~ "nvidia-drm.modeset=1" ]]; then
+            sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 nvidia-drm.modeset=1"/' /etc/default/grub
+            grub-mkconfig -o /boot/grub/grub.cfg
+        fi
+    fi
+
+    echo "NVIDIA drivers installed successfully."
+    echo "Please reboot your system."
+    echo "If necessary, adjust the Hz for your monitor to the maximum."
+
+    exit 0
+fi
+
+if [[ "$1" == "status" ]]; then
+    echo "Checking the status of NVIDIA drivers..."
+    nvidia-smi
+    exit 0
+fi
+
+if [[ "$1" == "help" ]]; then
+    help
+    exit 0
+fi
+
+echo "Unknown command: $1"
+echo "Use 'nexa nvidia help' for a list of available commands."
+exit 1
