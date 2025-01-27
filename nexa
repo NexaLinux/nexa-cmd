@@ -15,11 +15,11 @@ fi
 case "$1" in
     apt)
         shift
-        /usr/local/bin/nexa-apt "$@"
+        /usr/local/bin/nexa-apt/nexa-apt "$@"
         ;;
     nvidia)
         shift
-        /usr/local/bin/nexa-nvidia "$@"
+        /usr/local/bin/nexa-apt/nexa-nvidia "$@"
         ;;
     *)
         help
