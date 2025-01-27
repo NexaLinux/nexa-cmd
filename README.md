@@ -1,2 +1,2 @@
 # nexa-cmd
-The source code of all Nexa commands.
+The source code for all Nexa commands.
