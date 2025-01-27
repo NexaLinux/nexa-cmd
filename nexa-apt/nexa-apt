@@ -1,0 +1,80 @@
+#!/bin/bash
+
+
+function help() {
+    echo "Usage: nexa apt <command> [...]"
+    echo "Available commands:"
+    echo "  install        Install packages"
+    echo "  remove         Remove packages"
+    echo "  update         Update package database"
+    echo "  search         Search for packages"
+    echo "  query          Query installed packages"
+    echo "  upgrade        Upgrade system packages"
+    echo "  files          List package files"
+    echo "  database       Manage package database"
+    echo "  pacman-version Display pacman version"
+    echo "  help           Show this help message"
+}
+
+if [[ $1 != "help" && $EUID -ne 0 ]]; then
+    echo "Nexa apt must be run as root."
+    exit 1
+fi
+
+if [[ $# -eq 0 ]]; then
+    help
+    exit 1
+fi
+
+case "$1" in
+    install)
+        shift
+        echo "Installing packages: $@"
+        pacman -S "$@"
+        ;;
+    remove)
+        shift
+        echo "Removing packages: $@"
+        pacman -R "$@"
+        ;;
+    update)
+        echo "Updating package database..."
+        pacman -Sy
+        ;;
+    search)
+        shift
+        echo "Searching for packages: $@"
+        pacman -Ss "$@"
+        ;;
+    query)
+        shift
+        echo "Querying installed packages: $@"
+        pacman -Q "$@"
+        ;;
+    upgrade)
+        echo "Upgrading system packages..."
+        pacman -Syu
+        ;;
+    files)
+        shift
+        echo "Listing files for package: $@"
+        pacman -F "$@"
+        ;;
+    database)
+        shift
+        echo "Manipulating package database: $@"
+        pacman -D "$@"
+        ;;
+    pacman-version)
+        echo "Displaying pacman version..."
+        pacman -V
+        ;;
+    help)
+        help
+        ;;
+    *)
+        echo "Unknown command: $1"
+        echo "Use 'nexa apt help' for a list of available commands."
+        exit 1
+        ;;
+esac
