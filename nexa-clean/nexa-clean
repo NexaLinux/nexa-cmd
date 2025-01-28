@@ -1,0 +1,115 @@
+#!/bin/bash
+
+function help() {
+    echo "Usage: nexa clean <command>"
+    echo "Available commands:"
+    echo "  start          Perform system clean-up tasks"
+    echo "  help           Show this help message"
+}
+
+function clean_pacman_cache() {
+    echo "Clearing pacman cache..."
+    sudo pacman -Sc --noconfirm
+}
+
+function clean_orphaned_packages() {
+    echo "Removing orphaned packages..."
+    orphaned=$(pacman -Qtdq 2>/dev/null)
+    if [[ -n "$orphaned" ]]; then
+        sudo pacman -Rns --noconfirm $orphaned
+    else
+        echo "No orphaned packages to remove."
+    fi
+}
+
+function clean_tmp_files() {
+    echo "Cleaning temporary files..."
+    sudo rm -rf /tmp/* /var/tmp/*
+    rm -rf ~/.cache/*
+}
+
+function clean_journal_logs() {
+    echo "Cleaning old system logs..."
+    sudo journalctl --vacuum-time=2weeks
+}
+
+function clean_aur_helpers_cache() {
+    echo "Detecting and cleaning AUR helper caches..."
+    if command -v yay &>/dev/null; then
+        echo "Clearing yay cache..."
+        yay -Sc --noconfirm
+    fi
+    if command -v paru &>/dev/null; then
+        echo "Clearing paru cache..."
+        paru -Sc --noconfirm
+    fi
+    if command -v trizen &>/dev/null; then
+        echo "Clearing trizen cache..."
+        trizen -Sc --noconfirm
+    fi
+    if command -v pikaur &>/dev/null; then
+        echo "Clearing pikaur cache..."
+        pikaur -Sc --noconfirm
+    fi
+}
+
+function clean_old_kernels() {
+    echo "Removing unused kernel versions..."
+    current_kernel=$(uname -r | sed 's/-arch//')
+    installed_kernels=$(ls /usr/lib/modules)
+    for kernel in $installed_kernels; do
+        if [[ "$kernel" != "$current_kernel" ]]; then
+            echo "Removing kernel version: $kernel"
+            sudo pacman -Rns linux-$kernel --noconfirm 2>/dev/null || true
+            sudo pacman -Rns linux-lts-$kernel --noconfirm 2>/dev/null || true
+        fi
+    done
+}
+
+function clean_system() {
+    echo "This will perform the following clean-up tasks:"
+    echo "1. Clear pacman cache."
+    echo "2. Remove orphaned packages."
+    echo "3. Clean temporary files."
+    echo "4. Remove unused kernel versions."
+    echo "5. Clear journal logs."
+    echo "6. Detect and clean AUR helper caches."
+    echo -n "Do you want to proceed? [Y/n]: "
+    read -r response
+    case "$response" in
+        [Yy]*)
+            clean_pacman_cache
+            clean_orphaned_packages
+            clean_tmp_files
+            clean_journal_logs
+            clean_aur_helpers_cache
+            clean_old_kernels
+            echo "System clean-up completed."
+            ;;
+        [Nn]*)
+            echo "Clean-up cancelled."
+            ;;
+        *)
+            echo "Invalid input. Clean-up cancelled."
+            ;;
+    esac
+}
+
+if [[ $# -eq 0 ]]; then
+    help
+    exit 1
+fi
+
+case "$1" in
+    start)
+        clean_system
+        ;;
+    help)
+        help
+        ;;
+    *)
+        echo "Unknown command: $1"
+        help
+        exit 1
+        ;;
+esac

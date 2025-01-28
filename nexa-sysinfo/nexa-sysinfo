@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if ! command -v neofetch &> /dev/null; then
+    pacman -S --noconfirm neofetch &> /dev/null
+fi
+
+neofetch
