@@ -6,6 +6,7 @@ function help() {
     echo "Available commands:"
     echo "  install        Install packages"
     echo "  remove         Remove packages"
+    echo "  remove-deps    Removes a package along with it's dependencies.
     echo "  update         Update package database"
     echo "  search         Search for packages"
     echo "  query          Query installed packages"
@@ -37,6 +38,9 @@ case "$1" in
         echo "Removing packages: $@"
         pacman -R "$@"
         ;;
+    remove-deps)
+    echo "Removing selected package and its dependencies..."
+    pacman -Rns "$@"
     update)
         echo "Updating package database..."
         pacman -Sy
