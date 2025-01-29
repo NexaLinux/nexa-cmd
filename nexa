@@ -4,7 +4,6 @@ function help() {
     echo "Available subcommands:"
     echo "  apt"
     echo "  nvidia"
-    echo "  sysinfo"
     echo "  clean"
     echo "Run 'nexa <subcommand> help' to see the help for a specific subcommand."
 }
@@ -22,10 +21,6 @@ case "$1" in
     nvidia)
         shift
         /usr/local/bin/nexa-nvidia/nexa-nvidia "$@"
-        ;;
-    sysinfo)
-        shift
-        /usr/local/bin/nexa-sysinfo/nexa-sysinfo "$@"
         ;;
     clean)
         shift
