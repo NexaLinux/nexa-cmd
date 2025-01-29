@@ -38,7 +38,7 @@ case "$1" in
         pacman -R "$@"
         ;;
     remove-deps)
-        echo "Removing selected package and its dependencies..."
+        echo "Removing "$@" and its dependencies..."
         pacman -Rns "$@"
         ;;
     update)
