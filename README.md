@@ -14,6 +14,7 @@ Usage: nexa apt <command> [...]
 Available commands:
   install        Install packages
   remove         Remove packages
+  remove-deps    Removes a package and its dependencies.
   update         Update package database
   search         Search for packages
   query          Query installed packages
