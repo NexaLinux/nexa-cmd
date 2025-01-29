@@ -39,7 +39,7 @@ case "$1" in
         ;;
     remove-deps)
     echo "Removing $* and its dependencies..."
-    pacman -Rns "$@"
+    pacman -Rns "$@" ;;
         ;;
     update)
         echo "Updating package database..."
