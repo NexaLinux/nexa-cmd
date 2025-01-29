@@ -77,7 +77,7 @@ case "$1" in
         help
         ;;
     *)
-        echo "Unknown command: $1"
+        echo "Unknown command."
         echo "Use 'nexa apt help' for a list of available commands."
         exit 1
         ;;
