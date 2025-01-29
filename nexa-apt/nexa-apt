@@ -78,7 +78,7 @@ case "$1" in
         ;;
     *)
         echo "Unknown command."
-        echo "Use 'nexa apt help' for a list of available commands."
+echo "Use 'nexa apt help' for a list of available commands."
         exit 1
         ;;
 esac
