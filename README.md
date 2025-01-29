@@ -3,7 +3,7 @@
 
 <p>The source code for all of the Nexa commands.</p>
 
-![image](https://github.com/user-attachments/assets/b310830d-3501-4741-a76f-77e6d58d3d23)
+![image](https://github.com/user-attachments/assets/cd2c0d90-5b09-479a-91bd-52cca7e5fefd)
 
 </div>
 
