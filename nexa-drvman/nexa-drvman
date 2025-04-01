@@ -1,0 +1,124 @@
+# Copyright (C) 2025 Nexa Linux
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#!/bin/bash
+
+function help() {
+    echo "Usage: nexa drvman <command>"
+    echo "Available commands:"
+    echo "  install       Install a driver"
+    echo "  remove        Remove a driver"
+    echo "  help          Show this help message"
+}
+
+function list() {
+    echo "Fetching available drivers..."
+    drivers=$(sudo ubuntu-drivers list 2>&1 >/dev/null)
+
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Failed to fetch drivers."
+        exit 1
+    fi
+    drivers=$(sudo ubuntu-drivers list 2>&1 | grep -v "udevadm hwdb is deprecated")
+
+    echo "$drivers"
+}
+
+function install() {
+    list
+    echo "Please select a driver number to install:"
+
+    # get driver names
+    driver_names=$(sudo ubuntu-drivers list 2>&1 | grep -v "udevadm hwdb is deprecated" | awk -F, '{print $1}')
+    driver_array=($driver_names)
+
+    # create list
+    index=1
+    for driver in "${driver_array[@]}"; do
+        echo "[$index] $driver"
+        ((index++))
+    done
+    
+    read -p "Enter driver number: " driver_number
+
+    if [[ "$driver_number" -ge 1 && "$driver_number" -le "${#driver_array[@]}" ]]; then
+        driver_to_install=${driver_array[$((driver_number - 1))]}
+        echo "Installing $driver_to_install..."
+        sudo apt install -y "$driver_to_install"
+    else
+        echo "Invalid driver number."
+    fi
+}
+
+function remove() {
+    echo "Fetching available drivers..."
+    drivers=$(sudo ubuntu-drivers list 2>&1 >/dev/null)
+
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Failed to fetch drivers."
+        exit 1
+    fi
+    driver_names=$(sudo ubuntu-drivers list 2>&1 | grep -v "udevadm hwdb is deprecated" | awk -F, '{print $1}')
+    driver_array=($driver_names)
+    echo "Checking installed drivers..."
+    index=1
+    for driver in "${driver_array[@]}"; do
+        if dpkg -l | grep -q "$driver"; then
+            echo "[$index] $driver"
+            installed_drivers+=("$driver")
+            ((index++))
+        fi
+    done
+    if [[ ${#installed_drivers[@]} -eq 0 ]]; then
+        echo "No drivers found to remove."
+        exit 1
+    fi
+
+    read -p "Enter the number of the driver to remove: " driver_number
+
+    if [[ "$driver_number" -ge 1 && "$driver_number" -le "${#installed_drivers[@]}" ]]; then
+        driver_to_remove=${installed_drivers[$((driver_number - 1))]}
+        echo "Removing $driver_to_remove..."
+        sudo apt remove -y "$driver_to_remove"
+    else
+        echo "Invalid driver number."
+    fi
+}
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Error: nexa drvman must be run as root."
+    exit 1
+fi
+
+if [[ $# -eq 0 ]]; then
+    help
+    exit 1
+fi
+
+case "$1" in
+    install)
+        install
+        ;;
+    remove)
+        remove
+        ;;
+    help)
+        help
+        ;;
+    *)
+        echo "Unknown command: $1"
+        help
+        exit 1
+        ;;
+esac

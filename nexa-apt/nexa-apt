@@ -27,12 +27,12 @@ function help() {
     echo "  upgrade        Upgrade system packages"
     echo "  files          List package files"
     echo "  database       Manage package database"
-    echo "  pacman-version Display pacman version"
+    echo "  apt-version    Display apt version"
     echo "  help           Show this help message"
 }
 
 if [[ $1 != "help" && $EUID -ne 0 ]]; then
-    echo "Nexa apt must be run as root."
+    echo "Error: nexa apt must be run as root."
     exit 1
 fi
 
@@ -45,48 +45,48 @@ case "$1" in
     install)
         shift
         echo "Installing packages: $@"
-        pacman -S "$@"
+        apt install -y "$@"
         ;;
     remove)
         shift
         echo "Removing packages: $@"
-        pacman -R "$@"
+        apt remove -y "$@"
         ;;
     removedeps)
-    echo "Removing $* and its dependencies..."
-    pacman -Rns "$@"
+        echo "Removing $* and its dependencies..."
+        apt autoremove -y "$@"
         ;;
     update)
         echo "Updating package database..."
-        pacman -Sy
+        apt update
         ;;
     search)
         shift
         echo "Searching for packages: $@"
-        pacman -Ss "$@"
+        apt search "$@"
         ;;
     query)
         shift
         echo "Querying installed packages: $@"
-        pacman -Q "$@"
+        dpkg -l | grep "$@"
         ;;
     upgrade)
         echo "Upgrading system packages..."
-        pacman -Syu
+        apt upgrade -y
         ;;
     files)
         shift
         echo "Listing files for package: $@"
-        pacman -F "$@"
+        dpkg -L "$@"
         ;;
     database)
         shift
         echo "Manipulating package database: $@"
-        pacman -D "$@"
+        echo "Manual database management not directly supported in apt. Use dpkg or other tools."
         ;;
-    pacman-version)
-        echo "Displaying pacman version..."
-        pacman -V
+    apt-version)
+        echo "Displaying apt version..."
+        apt --version
         ;;
     help)
         help

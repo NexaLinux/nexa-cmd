@@ -22,19 +22,15 @@ function help() {
     echo "  help           Show this help message"
 }
 
-function clean_pacman_cache() {
-    echo "Clearing pacman cache..."
-    sudo pacman -Sc --noconfirm
+function clean_apt_cache() {
+    echo "Clearing APT cache..."
+    sudo apt clean
+    sudo apt autoclean
 }
 
 function clean_orphaned_packages() {
     echo "Removing orphaned packages..."
-    orphaned=$(pacman -Qtdq 2>/dev/null)
-    if [[ -n "$orphaned" ]]; then
-        sudo pacman -Rns --noconfirm $orphaned
-    else
-        echo "No orphaned packages to remove."
-    fi
+    sudo apt autoremove -y
 }
 
 function clean_tmp_files() {
@@ -48,56 +44,26 @@ function clean_journal_logs() {
     sudo journalctl --vacuum-time=2weeks
 }
 
-function clean_aur_helpers_cache() {
-    echo "Detecting and cleaning AUR helper caches..."
-    if command -v yay &>/dev/null; then
-        echo "Clearing yay cache..."
-        yay -Sc --noconfirm
-    fi
-    if command -v paru &>/dev/null; then
-        echo "Clearing paru cache..."
-        paru -Sc --noconfirm
-    fi
-    if command -v trizen &>/dev/null; then
-        echo "Clearing trizen cache..."
-        trizen -Sc --noconfirm
-    fi
-    if command -v pikaur &>/dev/null; then
-        echo "Clearing pikaur cache..."
-        pikaur -Sc --noconfirm
-    fi
-}
-
 function clean_old_kernels() {
     echo "Removing unused kernel versions..."
-    current_kernel=$(uname -r | sed 's/-arch//')
-    installed_kernels=$(ls /usr/lib/modules)
-    for kernel in $installed_kernels; do
-        if [[ "$kernel" != "$current_kernel" ]]; then
-            echo "Removing kernel version: $kernel"
-            sudo pacman -Rns linux-$kernel --noconfirm 2>/dev/null || true
-            sudo pacman -Rns linux-lts-$kernel --noconfirm 2>/dev/null || true
-        fi
-    done
+    sudo apt remove --purge $(dpkg -l | awk '/linux-image-[0-9]/{print $2}' | grep -v "$(uname -r)") -y
 }
 
 function clean_system() {
     echo "This will perform the following clean-up tasks:"
-    echo "1. Clear pacman cache."
+    echo "1. Clear APT cache."
     echo "2. Remove orphaned packages."
     echo "3. Clean temporary files."
     echo "4. Remove unused kernel versions."
     echo "5. Clear journal logs."
-    echo "6. Detect and clean AUR helper caches."
     echo -n "Do you want to proceed? [Y/n]: "
     read -r response
     case "$response" in
         [Yy]*)
-            clean_pacman_cache
+            clean_apt_cache
             clean_orphaned_packages
             clean_tmp_files
             clean_journal_logs
-            clean_aur_helpers_cache
             clean_old_kernels
             echo "System clean-up completed."
             ;;

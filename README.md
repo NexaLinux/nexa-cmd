@@ -10,30 +10,42 @@
 ## Commands
 
 ### nexa apt
+
 ```
 Usage: nexa apt <command> [...]
 Available commands:
   install        Install packages
   remove         Remove packages
-  remove-deps    Removes a package and its dependencies.
+  removedeps     Removes a package along with its dependencies.
   update         Update package database
   search         Search for packages
   query          Query installed packages
   upgrade        Upgrade system packages
   files          List package files
   database       Manage package database
-  pacman-version Display pacman version
-  help           Command help
-```
-
-### nexa nvidia
-```
-Usage: nexa nvidia <command> [...]
-Available commands:
-  install        Install NVIDIA drivers
-  status         Check the status of NVIDIA drivers
+  apt-version    Display apt version
   help           Show this help message
 ```
 
+### nexa-clean
+
+```
+Usage: nexa clean <command>
+Available commands:
+  start          Perform system clean-up tasks
+  help           Show this help message
+```
+
+### nexa-drvman
+
+```
+Usage: nexa drvman <command>
+Available commands:
+  install       Install a driver
+  remove        Remove a driver
+  help          Show this help message
+```
+
 ## Contribute
+
 Want to improve the commands? Simply create a [Pull Request](https://github.com/NexaLinux/nexa-cmd/pulls) to get started!

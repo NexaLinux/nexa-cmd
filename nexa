@@ -18,11 +18,10 @@
 function help() {
     echo "Available subcommands:"
     echo "  apt"
-    echo "  nvidia"
+    echo "  drvman"
     echo "  clean"
     echo "Run 'nexa <subcommand> help' to see the help for a specific subcommand."
 }
-
 if [[ -z "$1" ]]; then
     help
     exit 1
@@ -31,17 +30,33 @@ fi
 case "$1" in
     apt)
         shift
-        /usr/local/bin/nexa-apt/nexa-apt "$@"
+        if [ ! -f "/usr/bin/nexa-apt/nexa-apt" ]; then
+            echo "Error: /usr/bin/nexa-apt/nexa-apt not found or not a script."
+            exit 1
+        fi
+        bash /usr/bin/nexa-apt/nexa-apt "$@"
         ;;
-    nvidia)
+    drvman)
         shift
-        /usr/local/bin/nexa-nvidia/nexa-nvidia "$@"
+        if [ ! -f "/usr/bin/nexa-drvman/nexa-drvman" ]; then
+            echo "Error: /usr/bin/nexa-drvman/nexa-drvman not found or not a script."
+            exit 1
+        fi
+        bash /usr/bin/nexa-drvman/nexa-drvman "$@"
         ;;
     clean)
         shift
-        /usr/local/bin/nexa-clean/nexa-clean "$@"
-        ;;        
+        if [ ! -f "/usr/bin/nexa-clean/nexa-clean" ]; then
+            echo "Error: /usr/bin/nexa-clean/nexa-clean not found or not a script."
+            exit 1
+        fi
+        bash /usr/bin/nexa-clean/nexa-clean "$@"
+        ;;
+    help)
+        help
+        ;;
     *)
+        echo "Unknown command: $1"
         help
         exit 1
         ;;
